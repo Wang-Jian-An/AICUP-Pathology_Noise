@@ -41,6 +41,7 @@ if __name__ == "__main__":
     ]
 
     # Step4. Model Training
+    finalResult = list()
     if modelMode == "ML":
         inputFeatures = list(trainAudioDataFrame.columns)
         trainAudioDataFrame[mainTarget] = trainData[mainTarget].tolist()
@@ -58,30 +59,37 @@ if __name__ == "__main__":
                                         featureImportance = None,
                                         modelFileName = None).fit(permutationImportanceMethod = None)
     else:
-        print(np.array(trainAudioDataFrame).shape)
-        totalResult = DLTrainingFlow(
-            trainAudio = trainAudioDataFrame,
-            valiAudio = valiAudioDataFrame,
-            testAudio = testAudioDataFrame,
-            trainMetaData = trainData[metaDatainputFeatures],
-            valiMetaData = valiData[metaDatainputFeatures],
-            testMetaData = testData[metaDatainputFeatures],
-            trainTarget = trainData[mainTarget],
-            valiTarget = valiData[mainTarget],
-            testTarget = testData[mainTarget],
-            batch_size = 16,
-            device = device,
-            modelName = "onlyCNN",
-            modelParams = {
-                "numSequence": trainAudioDataFrame[0].__len__(), 
-                "numFeatures": trainAudioDataFrame[0][0].__len__(), 
-                "numTarget": 5, 
-                "numCNNLayer": 2, 
-                "numDecoderLayer": 1, 
-                "kernel_size": 15, 
-                "numStride": 2
-            },
-            lr = 1e-3
-        ).fit()
-    print(totalResult["Evaluation"])
-    pd.DataFrame([totalResult["Evaluation"]]).to_excel(os.path.join(mainPath, "result", "test.xlsx"), index = None)
+        for mainModel, allModelParams in modelParamsList.items():
+            for oneModelParams in allModelParams:
+                totalResult = DLTrainingFlow(
+                    trainAudio = trainAudioDataFrame,
+                    valiAudio = valiAudioDataFrame,
+                    testAudio = testAudioDataFrame,
+                    trainMetaData = trainData[metaDatainputFeatures],
+                    valiMetaData = valiData[metaDatainputFeatures],
+                    testMetaData = testData[metaDatainputFeatures],
+                    trainTarget = trainData[mainTarget],
+                    valiTarget = valiData[mainTarget],
+                    testTarget = testData[mainTarget],
+                    batch_size = 2,
+                    device = device,
+                    modelName = mainModel,
+                    modelParams = {
+                        "numSequence": trainAudioDataFrame[0].__len__(), 
+                        "numAudioFeature": trainAudioDataFrame[0][0].__len__(), 
+                        "numMetaDataFeature": metaDatainputFeatures.__len__(), 
+                        **oneModelParams
+                    },
+                    lr = 1e-3
+                ).fit()
+                basicInformation = {
+                    "Main-Model": mainModel,
+                    **oneModelParams, 
+                    "batch_size": 2
+                }
+                finalResult.append({
+                    **basicInformation,
+                    **totalResult["Evaluation"]
+                })
+    print(finalResult)
+    pd.DataFrame(finalResult).to_excel(os.path.join(mainPath, "result", "test.xlsx"), index = None)
