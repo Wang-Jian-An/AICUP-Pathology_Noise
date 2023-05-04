@@ -207,15 +207,38 @@ class DLTrainingFlow():
             model = onlyCNNModel(
                 **self.modelParams
             )
-            pass 
         elif modelName == "onlyRNN-RNN":
-            pass
+            self.modelParams = {
+                "rnnModel": "RNN",
+                **self.modelParams
+            }
+            model = onlyRNNModel(
+                **self.modelParams
+            )
         elif modelName == "onlyRNN-LSTM":
-            pass
+            self.modelParams = {
+                "rnnModel": "LSTM",
+                **self.modelParams
+            }
+            model = onlyRNNModel(
+                **self.modelParams
+            )
         elif modelName == "onlyRNN-GRU":
-            pass
-        elif modelName == "CNNandRNN":
-            pass
+            self.modelParams = {
+                "rnnModel": "GRU",
+                **self.modelParams
+            }
+            model = onlyRNNModel(
+                **self.modelParams
+            )
+        elif modelName == "CNNandRNNModel":
+            self.modelParams = {
+                "rnnModel": "GRU",
+                **self.modelParams
+            }
+            model = CNNandRNNModel(
+                **self.modelParams
+            )
         return model
 
     def DLTraining(self, model, trainDataLoader, epochs, valiDataLoader = None):
