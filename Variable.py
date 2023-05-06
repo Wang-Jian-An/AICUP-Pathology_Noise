@@ -12,6 +12,24 @@ metaDatainputFeatures = [
 ]
 
 modelParamsList = {
+    "pretrainedModel": [
+        {
+            "numTarget": 5, 
+            "pretrainedModelName": "resnet18",
+            "numDecoderLayer": 1, 
+            "numMetaDataLayer": 1, 
+        },
+    ],
+    "onlyCNN": [
+        {
+            "numTarget": 5, 
+            "numCNNLayer": 3,
+            "numDecoderLayer": 1, 
+            "numMetaDataLayer": 1, 
+            "kernel_size": (15, 7),
+            "numStride": 2
+        },
+    ],
     "CNNandRNNModel": [
         {
             "numTarget": 5, 
@@ -67,5 +85,15 @@ modelParamsList = {
             "kernel_size": 15,
             "numStride": 2
         },
-    ]
+    ],
+    "CNNandAttentionModel": [
+        {
+            "numTarget": 5, 
+            "numCNNLayer": 20,
+            "numDecoderLayer": 1, 
+            "numMetaDataLayer": 1, 
+            "kernel_size": 15,
+            "numStride": 1
+        }
+    ],
 }

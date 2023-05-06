@@ -169,41 +169,49 @@ class DLTrainingFlow():
 
         # Step2. Define Model
         model = self.defineModel(modelName = self.modelName).to(self.device)
-        self.loss_func = nn.CrossEntropyLoss().to(self.device)
+        self.loss_func = nn.CrossEntropyLoss(torch.Tensor([0.1, 0.1, 0.2, 0.3, 0.3])).to(self.device)
         self.optimizer = torch.optim.Adam(model.parameters(), lr = self.lr)
+        print(model)
 
         # Step2. 針對訓練資料進行模型訓練、驗證資料進行 Overfitting 檢測
         model, trainLossList, valiLossList = self.DLTraining(
             model = model, 
             trainDataLoader = trainDataLoader, 
-            epochs = 20, 
+            epochs = 100, 
             valiDataLoader = valiDataLoader
         )
 
-        # Step3. 針對測試資料進行模型預測
-        testYhat = DLPrediction(
-            model = model, 
-            predDataLoader = testDataLoader
-        )
+        # # Step3. 針對測試資料進行模型預測
+        # testYhat = DLPrediction(
+        #     model = model, 
+        #     predDataLoader = testDataLoader
+        # )
 
-        # Step4. 模型評估
-        evaluationResult = model_evaluation(
-            ytrue = self.testTarget,
-            ypred = testYhat["yhat"],
-            ypred_proba = testYhat["yhatProb"]
-        )
+        # # Step4. 模型評估
+        # evaluationResult = model_evaluation(
+        #     ytrue = self.testTarget,
+        #     ypred = testYhat["yhat"],
+        #     ypred_proba = testYhat["yhatProb"]
+        # )
+        
+        # del model, self.loss_func, self.optimizer
 
-        # Step5. 如需要 Refit，則開始進行
-        if self.refit:
-            pass
+        # # Step5. 如需要 Refit，則開始進行
+        # if self.refit:
+        #     pass
 
-        return {
-            "Evaluation": evaluationResult
-        }
+        # return {
+        #     "Evaluation": evaluationResult
+        # }
 
     def defineModel(self, modelName):
 
         if modelName == "onlyCNN":
+            self.modelParams = {
+                "device": self.device,
+                **self.modelParams
+            }
+            print(self.modelParams)
             model = onlyCNNModel(
                 **self.modelParams
             )
@@ -234,9 +242,26 @@ class DLTrainingFlow():
         elif modelName == "CNNandRNNModel":
             self.modelParams = {
                 "rnnModel": "GRU",
+                "device": self.device, 
                 **self.modelParams
             }
             model = CNNandRNNModel(
+                **self.modelParams
+            )
+        elif modelName == "CNNandAttentionModel":
+            self.modelParams = {
+                "device": self.device,
+                **self.modelParams
+            }
+            model = CNNandAttentionModel(
+                **self.modelParams
+            )
+        elif modelName == "pretrainedModel":
+            self.modelParams = {
+                "device": self.device,
+                **self.modelParams
+            }
+            model = pretrainedModel(
                 **self.modelParams
             )
         return model
@@ -258,26 +283,25 @@ class DLTrainingFlow():
             for audioData, metaData, target in trainDataLoader:
                 self.optimizer.zero_grad()
                 yhat = model(
-                    audioData = audioData.to(self.device),
-                    metaData = metaData.to(self.device)
+                    audioData = audioData,
+                    metaData = metaData
                 )
-                loss = self.loss_func(yhat, target)
+                loss = self.loss_func(yhat, target.to(self.device))
                 loss.backward()
-                trainLoss.append(loss.cpu() / audioData.size()[0])
-                break
-            trainLossList.append(torch.mean(torch.FloatTensor(trainLoss)))
+                self.optimizer.step()
+                trainLoss.append(loss.cpu())
+            trainLossList.append(torch.mean(torch.FloatTensor(trainLoss)).item())
             if valiDataLoader:
                 with torch.no_grad():
                     for audioData, metaData, target in valiDataLoader:
                         yhat = model(
-                            audioData = audioData.to(self.device),
-                            metaData = metaData.to(self.device)
+                            audioData = audioData,
+                            metaData = metaData
                         )
-                        loss = self.loss_func(yhat, target)
-                        valiLoss.append(loss.cpu() / audioData.size()[0])
-                        break
-                valiLossList.append(torch.mean(torch.FloatTensor(valiLoss)))
-            break
+                        loss = self.loss_func(yhat, target.to(self.device))
+                        valiLoss.append(loss.cpu())
+                valiLossList.append(torch.mean(torch.FloatTensor(valiLoss)).item())
+            print("Epoch", epoch, "Train Loss", trainLossList[-1], "Validation Loss", valiLossList[-1])
         return model, trainLossList, valiLossList
 
     def DLEvaluation(self):

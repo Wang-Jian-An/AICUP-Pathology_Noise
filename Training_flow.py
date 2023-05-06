@@ -91,5 +91,5 @@ if __name__ == "__main__":
                     **basicInformation,
                     **totalResult["Evaluation"]
                 })
-    print(finalResult)
-    pd.DataFrame(finalResult).to_excel(os.path.join(mainPath, "result", "test.xlsx"), index = None)
+                print(finalResult)
+                pd.DataFrame(finalResult).to_excel(os.path.join(mainPath, "result", "test.xlsx"), index = None)

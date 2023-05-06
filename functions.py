@@ -58,6 +58,7 @@ def feature_engineering(oneAudioDict, FEID = 1):
     FEID = 3：將 STST、Mel Spectrogram 結果結合起來計算出 2D 資料結構
     FEID = 4：透過 STFT 搭配 sequence padding 技巧求得 3D 資料結構
     FEID = 5：透過 Mel Spectrogram 搭配 sequence padding 技巧求得 3D 資料結構
+    FEID = 6：透過 MFCC 搭配 sequence padding 技巧求得 3D 資料結構
     """
 
     if FEID == 1:
@@ -84,5 +85,15 @@ def feature_engineering(oneAudioDict, FEID = 1):
         }
         FEOutput = list(FEOutput.values())
     elif FEID == 5:
-        pass
+        FEOutput = {
+            oneKey: librosa.power_to_db( librosa.feature.melspectrogram( np.array(oneValue) ))
+            for oneKey, oneValue in oneAudioDict.items()
+        }
+        FEOutput = list(FEOutput.values())
+    elif FEID == 6:
+        FEOutput = {
+            oneKey: librosa.feature.mfcc( np.array(oneValue) )
+            for oneKey, oneValue in oneAudioDict.items()
+        }
+        FEOutput = list(FEOutput.values())
     return FEOutput
